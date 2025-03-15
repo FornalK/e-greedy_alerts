@@ -7,9 +7,25 @@
     <title>Web App</title>
 </head>
 <body>
-    <button onclick="sendChoice('Option1')">Option 1</button>
-    <button onclick="sendChoice('Option2')">Option 2</button>
+    <button onclick="sendChoice('Option1')" style="position: fixed; top: 5px; left: 5px;">Option 1</button>
+    <button onclick="sendChoice('Option2')" style="position: fixed; top: 5px; left: 80px;">Option 2</button>
     <p id="serverMessage"></p>
+
+    <input type="text" id="user" placeholder="User">
+    <div id="instruction">Kiedy będziesz gotowy przystąpić do działania kliknij przycisk START</div>
+    <button id="startBtn">START</button>
+
+    <div id="container">
+        <div id="questionContainer">
+            <img id="questionImage" style="display:none;" src="" alt="Pytanie">
+        </div>
+        <div id="answers" style="display:none;">
+            <img id="answerA" src="" alt="Odpowiedź A" onclick="selectAnswer('A')">
+            <img id="answerB" src="" alt="Odpowiedź B" onclick="selectAnswer('B')">
+            <img id="answerC" src="" alt="Odpowiedź C" onclick="selectAnswer('C')">
+            <img id="answerD" src="" alt="Odpowiedź D" onclick="selectAnswer('D')">
+        </div>
+    </div>
 
     <script src="js/script.js"></script>
 </body>
