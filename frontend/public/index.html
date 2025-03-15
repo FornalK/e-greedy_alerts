@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web App</title>
+</head>
+<body>
+    <button onclick="sendChoice('Option1')">Option 1</button>
+    <button onclick="sendChoice('Option2')">Option 2</button>
+    <p id="serverMessage"></p>
+
+    <script>
+        function sendChoice(choice) {
+            fetch("http://127.0.0.1:8000/save/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user: "TestUser", choice })
+            }).then(response => response.json())
+              .then(data => console.log(data));
+        }
+
+        let ws = new WebSocket("ws://127.0.0.1:8000/ws");
+        ws.onmessage = event => document.getElementById("serverMessage").innerText = event.data;
+    </script>
+</body>
+</html>

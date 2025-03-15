@@ -1,0 +1,22 @@
+{
+  "name": "e-greedy_alerts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FornalK/e-greedy_alerts.git"
+  },
+  "author": "Kacper Fornalczyk",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/FornalK/e-greedy_alerts/issues"
+  },
+  "homepage": "https://github.com/FornalK/e-greedy_alerts#readme",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
