@@ -63,3 +63,30 @@ body {
     height: 60px;
     cursor: pointer;
 }
+
+#alert {
+    position: fixed;
+    width: 400px;
+    height: 300px;
+    bottom: 0;
+    right: 0;
+	display: none;
+}
+
+#alertImage {
+    width: 100%;
+    height: auto;
+    display: inline;
+}
+
+#exitAlertBtn {
+    position: fixed;
+    background-color: rgb(0, 255, 0);
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    width: 380px;
+    height: 46px;
+    bottom: 5px;
+    right: 10px;
+}

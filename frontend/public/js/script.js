@@ -30,7 +30,13 @@ document.getElementById('startBtn').addEventListener('click', function() {
     // Ustawiamy styl display na 'block', aby pokazać ukryty kontener
     document.getElementById('container').style.display = 'block';
 
+    // pokazujemy pierwsze zadanie
     showNextQuestion();
+    
+    // losujemy za ile ma pojawic sie pierwszy alert
+    // Losujemy za ile ma sie pojawić następny alert
+    let delay = Math.random() * 7000 + 8000; // wyswietlenie alertu z opoznieniem od 8 do 15 sekund
+    setTimeout(showAlert, delay);
 });
 
 // Funkcja losowania pytania
@@ -67,6 +73,7 @@ function displayAnswers(questionNumber) {
     document.getElementById('answerD').src = `images/game/ciekawostka_${String(questionNumber).padStart(3, '0')}_D.png`;
 }
 
+// Uruchamia sie kiedy uzytkownik odpowie na pytanie przez klkniecie kafelka
 function selectAnswer(answer) {
     // zapisanie wybranej odpowiedzi
     currentUserAnswer = answer;
@@ -82,3 +89,22 @@ function selectAnswer(answer) {
     // Odpalenie kolejnego pytania
     showNextQuestion();
 }
+
+// Pokazuje alerty
+function showAlert() {
+    // Ustawiamy styl display na 'block', aby pokazać ukryty kontener
+    document.getElementById('alert').style.display = 'block';
+
+    // TO-DO (na razie losowe wybieranie alertu)
+    let alertNumber = Math.floor(Math.random() * 4) + 1;
+    document.getElementById('alertImage').src = `images/alerts/${String(alertNumber)}.png`;
+}
+
+// Podpięcie funkcji anonimowej, zamykajacej alert
+document.getElementById('exitAlertBtn').addEventListener('click', function() {
+    // Usuwamy alert
+	document.getElementById('alert').style.display = 'none';
+    // Losujemy za ile ma sie pojawić następny alert
+    let delay = Math.random() * 7000 + 8000; // wyswietlenie kolejnego alertu miedzy 8 a 15 sekund
+    setTimeout(showAlert, delay);
+});
