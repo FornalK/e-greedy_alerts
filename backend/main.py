@@ -6,16 +6,26 @@ import asyncio
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from mab import EpsilonGreedy
+
+# Inicjalizacja bandyty
+num_variants = 4
+epsilon = 0.2
+bandit = EpsilonGreedy(num_variants, epsilon)
+
+# Model danych odbieranych z frontendu
 class AlertData(BaseModel):
     user: str
     alertNumber: int
     alertTime: float
 
+# Aplikacja FastAPI
 app = FastAPI()
 
 # Lista aktywnych połączeń WebSocket
 active_connections = set()
 
+# Konfiguracja aplikacji FastAPI
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,6 +34,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Nazwa pliku gdzie zapisywane sa dane
 FILE_PATH = "data.xlsx"
 
 # Tworzenie pliku jeśli nie istnieje
@@ -31,6 +42,7 @@ if not os.path.exists(FILE_PATH):
     df = pd.DataFrame(columns=["User", "alertNumber", "alertTime"])
     df.to_excel(FILE_PATH, index=False)
 
+# Funkcja, która otrzymuje i zapisuje dane z frontendu
 @app.post("/save/")
 async def save_choice(data: AlertData):
     print(f"🔍 Otrzymane dane: {data}")
@@ -38,11 +50,18 @@ async def save_choice(data: AlertData):
     df.loc[len(df)] = [data.user, data.alertNumber, data.alertTime]
     df.to_excel(FILE_PATH, index=False)
 
+    # Aktualizacja modelu bandyty
+    # Po uzyskaniu nagrody (np. ujemnego czasu ekspozycji)
+    reward = - float(data.alertTime)  # Im krótszy czas, tym wyższa nagroda
+    selected_variant = int(data.alertNumber)
+    bandit.update(selected_variant, reward)
+
     # Uruchomienie asynchronicznej funkcji do wysłania numeru dla nowego alertu przez WebSocket
     asyncio.create_task(send_new_alert_number())
 
     return {"message": "Saved"}
 
+# Endpointy do łączenia się z frontendem
 @app.websocket("/ws/connect")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -64,6 +83,7 @@ async def websocket_new_alert_number(websocket: WebSocket):
         print("❌ WebSocket rozłączony")
         active_connections.remove(websocket)
 
+# Funkcja, która wysyła informacje o wybranych przez algorytm alertach
 async def send_new_alert_number():
     if not active_connections:
         print("⚠️ Brak aktywnych połączeń WebSocket")
@@ -79,5 +99,8 @@ async def send_new_alert_number():
         except Exception as e:
             print(f"⚠️ Błąd podczas wysyłania: {e}")
 
+# Funkcja, która wybiera wariant alertu przez wielorękiego bandyte
 def findNewAlertNumber():
-    return random.randint(1, 4)
+    # Wybór wariantu alertu
+    variant = bandit.select_variant()
+    return variant + 1 # + 1 bo indeksujemy od 0
