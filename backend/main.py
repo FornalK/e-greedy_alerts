@@ -7,7 +7,8 @@ from pydantic import BaseModel
 
 class ClickData(BaseModel):
     user: str
-    choice: str
+    alertNumber: int
+    alertTime: float
 
 app = FastAPI()
 
@@ -23,14 +24,14 @@ FILE_PATH = "data.xlsx"
 
 # Tworzenie pliku jeśli nie istnieje
 if not os.path.exists(FILE_PATH):
-    df = pd.DataFrame(columns=["User", "Choice"])
+    df = pd.DataFrame(columns=["User", "alertNumber", "alertTime"])
     df.to_excel(FILE_PATH, index=False)
 
 @app.post("/save/")
 async def save_choice(data: ClickData):
     print(f"🔍 Otrzymane dane: {data}")
     df = pd.read_excel(FILE_PATH)
-    df.loc[len(df)] = [data.user, data.choice]
+    df.loc[len(df)] = [data.user, data.alertNumber, data.alertTime]
     df.to_excel(FILE_PATH, index=False)
     return {"message": "Saved"}
 

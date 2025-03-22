@@ -4,12 +4,14 @@ ws.onmessage = event => document.getElementById("serverMessage").innerText = eve
 let availableQuestions = Array.from({ length: 160 }, (_, i) => i + 1);
 let userName;
 let currentUserAnswer;
+let alertStartTime;
+let alertNumber;
 
-function sendChoice(choice) {
+function sendChoice(alertNumber, alertTime) {
     fetch("http://127.0.0.1:8000/save/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user: userName, choice })
+        body: JSON.stringify({ user: userName, alertNumber: alertNumber, alertTime: alertTime })
     }).then(response => response.json())
       .then(data => console.log(data));
 }
@@ -83,25 +85,33 @@ function selectAnswer(answer) {
     // musimy tez ukryc obecne zdjecie z pytaniem
     document.getElementById('questionImage').style.display = 'none';
 
-    // wysłanie informacji do serwera
-    sendChoice(answer)
-
     // Odpalenie kolejnego pytania
     showNextQuestion();
 }
 
 // Pokazuje alerty
 function showAlert() {
+    // TO-DO (na razie losowe wybieranie alertu)
+    alertNumber = Math.floor(Math.random() * 4) + 1;
+    document.getElementById('alertImage').src = `images/alerts/${String(alertNumber)}.png`;
+
     // Ustawiamy styl display na 'block', aby pokazać ukryty kontener
     document.getElementById('alert').style.display = 'block';
 
-    // TO-DO (na razie losowe wybieranie alertu)
-    let alertNumber = Math.floor(Math.random() * 4) + 1;
-    document.getElementById('alertImage').src = `images/alerts/${String(alertNumber)}.png`;
+    // Start pomiaru czasu od pojawienia sie alertu
+    alertStartTime = performance.now();
 }
 
 // Podpięcie funkcji anonimowej, zamykajacej alert
 document.getElementById('exitAlertBtn').addEventListener('click', function() {
+    // Pomiar czasu od wyswietlenia alertu do jego zamkniecia
+    let alertEndTime = performance.now();
+    let elapsedTime = (alertEndTime - alertStartTime).toFixed(2);
+    console.log(elapsedTime);
+
+    // Wyslanie do backendu informacji o czasie zamkniecia oraz informacji o tym ktory byl to alert
+    sendChoice(alertNumber, elapsedTime);
+
     // Usuwamy alert
 	document.getElementById('alert').style.display = 'none';
     // Losujemy za ile ma sie pojawić następny alert
