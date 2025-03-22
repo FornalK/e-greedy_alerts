@@ -1,5 +1,14 @@
-let ws = new WebSocket("ws://127.0.0.1:8000/ws");
-ws.onmessage = event => document.getElementById("serverMessage").innerText = event.data;
+let wsConnect = new WebSocket("ws://127.0.0.1:8000/ws/connect");
+wsConnect.onmessage = event => document.getElementById("serverMessage").innerText = event.data;
+
+const wsNewAlertNumber = new WebSocket("ws://127.0.0.1:8000/ws/newAlertNumber");
+wsNewAlertNumber.onmessage = (event) => {
+    // Kiedy otrzymam informacje z ewaluacja od algorytmu, który teraz alery wyświetlić to trzeba to zaplanować
+    console.log("Numer alert do wyświetlenia:", event.data);
+    // Losujemy za ile ma sie pojawić następny alert
+    let delay = Math.random() * 7000 + 8000; // wyswietlenie kolejnego alertu miedzy 8 a 15 sekund
+    setTimeout(() => showAlert(parseInt(event.data)), delay);
+};
 
 let availableQuestions = Array.from({ length: 160 }, (_, i) => i + 1);
 let userName;
@@ -7,7 +16,7 @@ let currentUserAnswer;
 let alertStartTime;
 let alertNumber;
 
-function sendChoice(alertNumber, alertTime) {
+function sendAlertData(alertNumber, alertTime) {
     fetch("http://127.0.0.1:8000/save/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -35,10 +44,9 @@ document.getElementById('startBtn').addEventListener('click', function() {
     // pokazujemy pierwsze zadanie
     showNextQuestion();
     
-    // losujemy za ile ma pojawic sie pierwszy alert
-    // Losujemy za ile ma sie pojawić następny alert
+    // losujemy za ile ma pojawic sie pierwszy alert (domyślnie jest to alert z numerem 1)
     let delay = Math.random() * 7000 + 8000; // wyswietlenie alertu z opoznieniem od 8 do 15 sekund
-    setTimeout(showAlert, delay);
+    setTimeout(() => showAlert(1), delay);
 });
 
 // Funkcja losowania pytania
@@ -90,9 +98,8 @@ function selectAnswer(answer) {
 }
 
 // Pokazuje alerty
-function showAlert() {
-    // TO-DO (na razie losowe wybieranie alertu)
-    alertNumber = Math.floor(Math.random() * 4) + 1;
+function showAlert(newAlertNumber) {
+    alertNumber = newAlertNumber;
     document.getElementById('alertImage').src = `images/alerts/${String(alertNumber)}.png`;
 
     // Ustawiamy styl display na 'block', aby pokazać ukryty kontener
@@ -110,11 +117,8 @@ document.getElementById('exitAlertBtn').addEventListener('click', function() {
     console.log(elapsedTime);
 
     // Wyslanie do backendu informacji o czasie zamkniecia oraz informacji o tym ktory byl to alert
-    sendChoice(alertNumber, elapsedTime);
+    sendAlertData(alertNumber, elapsedTime);
 
     // Usuwamy alert
 	document.getElementById('alert').style.display = 'none';
-    // Losujemy za ile ma sie pojawić następny alert
-    let delay = Math.random() * 7000 + 8000; // wyswietlenie kolejnego alertu miedzy 8 a 15 sekund
-    setTimeout(showAlert, delay);
 });
