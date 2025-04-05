@@ -77,7 +77,7 @@ async def websocket_new_alert_number(websocket: WebSocket):
 
     try:
         while True:
-            await websocket.receive_text()  # Czeka na dane (możesz to usunąć, jeśli nie potrzebujesz)
+            await websocket.receive_text()  # Czeka na dane
     except WebSocketDisconnect:
         print("❌ WebSocket rozłączony")
         active_connections.remove(websocket)
