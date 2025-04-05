@@ -1,7 +1,15 @@
-let wsConnect = new WebSocket("ws://127.0.0.1:8000/ws/connect");
+const backendHost = window.location.hostname === "localhost"
+    ? "ws://127.0.0.1:8000"
+    : "wss://egreedy-backend.onrender.com";
+
+const backendHttp = window.location.hostname === "localhost"
+    ? "http://127.0.0.1:8000"
+    : "https://egreedy-backend.onrender.com";
+
+let wsConnect = new WebSocket(`${backendHost}/ws/connect`);
 wsConnect.onmessage = event => document.getElementById("serverMessage").innerText = event.data;
 
-const wsNewAlertNumber = new WebSocket("ws://127.0.0.1:8000/ws/newAlertNumber");
+const wsNewAlertNumber = new WebSocket(`${backendHost}/ws/newAlertNumber`);
 wsNewAlertNumber.onmessage = (event) => {
     // Kiedy otrzymam informacje z ewaluacja od algorytmu, który teraz alery wyświetlić to trzeba to zaplanować
     console.log("Numer alert do wyświetlenia:", event.data);
@@ -22,7 +30,7 @@ let alertStartTime;
 let alertNumber;
 
 function sendAlertData(alertNumber, alertTime) {
-    fetch("http://127.0.0.1:8000/save/", {
+    fetch(`${backendHttp}/save/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user: userName, alertNumber: alertNumber, alertTime: alertTime })
