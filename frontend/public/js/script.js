@@ -10,7 +10,12 @@ wsNewAlertNumber.onmessage = (event) => {
     setTimeout(() => showAlert(parseInt(event.data)), delay);
 };
 
-let availableQuestions = Array.from({ length: 160 }, (_, i) => i + 1);
+const colorsRGB = ["#ff0000", "#00ff00", "#0000ff", "#ff00ff", "#00ffff", "#ffff00", "#000000", "#ffffff"];
+const colorsInWords = ["CZERWONY", "ZIELONY", "NIEBIESKI", "FIOLETOWY", "CYJAN", "ŻÓŁTY", "CZARNY", "BIAŁY"];
+const questions = ["Jakiego koloru jest napis?", "Na jaki kolor wskazuje napis?"];
+let currentQuestionType;
+let currentText;
+let currentColor;
 let userName;
 let currentUserAnswer;
 let alertStartTime;
@@ -39,62 +44,65 @@ document.getElementById('startBtn').addEventListener('click', function() {
     textField.remove();
 
     // Ustawiamy styl display na 'block', aby pokazać ukryty kontener
+    let answers = document.getElementsByClassName('answers');
+    answers[0].style.display = 'flex';
+    answers[1].style.display = 'flex';
+    let elements = document.querySelectorAll(".answer");
+    for(let i = 0; i < elements.length; i++)
+        elements[i].style.backgroundColor = colorsRGB[i];
+
     document.getElementById('container').style.display = 'block';
 
     // pokazujemy pierwsze zadanie
-    showNextQuestion();
+    showNextTask();
     
     // losujemy za ile ma pojawic sie pierwszy alert (domyślnie jest to alert z numerem 1)
     let delay = Math.random() * 7000 + 8000; // wyswietlenie alertu z opoznieniem od 8 do 15 sekund
     setTimeout(() => showAlert(1), delay);
 });
 
-// Funkcja losowania pytania
-function getRandomQuestion() {
-    const randomIndex = Math.floor(Math.random() * availableQuestions.length);
-    const questionNumber = availableQuestions[randomIndex];
-    currentQuestionNumber = questionNumber;
-    availableQuestions.splice(randomIndex, 1); // Usuń użyte pytanie
-    return questionNumber + 1 // + 1 bo indeksujemy od zera a numery pytań w plikach są od 1;
+// Pokazuje zadanie
+function showNextTask() {
+    document.getElementById('result').style.display = 'none';
+    let task = document.getElementById('task');
+    let question = document.getElementById('question');
+    let colorText = document.getElementById('colorText');
+    currentQuestionType = Math.floor(Math.random() * 2);
+    currentText = colorsInWords[Math.floor(Math.random() * 8)];
+    currentColorIndex = Math.floor(Math.random() * 8);
+    currentColor = colorsInWords[currentColorIndex];
+
+    question.textContent = questions[currentQuestionType];
+    colorText.textContent = currentText;
+    colorText.style.color = colorsRGB[currentColorIndex];
+    task.style.display = 'inline';
 }
 
-// Pokazuje pytania
-function showNextQuestion() {
-    if (availableQuestions == 0) {
-        // Ukyrwamy kontener z pytaniami
-        document.getElementById('container').style.display = 'none';
 
-        return
-    }
-
-    const questionNumber = getRandomQuestion();
-    let questionImg = document.getElementById('questionImage');
-    questionImg.style.display = 'inline';
-    questionImg.src = `images/game/ciekawostka_${String(questionNumber).padStart(3, '0')}.png`;
-    displayAnswers(questionNumber);
-}
-
-// Wyswietla odpowiedzi odekwatne do pytania
-function displayAnswers(questionNumber) {
-    document.getElementById('answers').style.display = 'flex';
-    document.getElementById('answerA').src = `images/game/ciekawostka_${String(questionNumber).padStart(3, '0')}_A.png`;
-    document.getElementById('answerB').src = `images/game/ciekawostka_${String(questionNumber).padStart(3, '0')}_B.png`;
-    document.getElementById('answerC').src = `images/game/ciekawostka_${String(questionNumber).padStart(3, '0')}_C.png`;
-    document.getElementById('answerD').src = `images/game/ciekawostka_${String(questionNumber).padStart(3, '0')}_D.png`;
-}
-
-// Uruchamia sie kiedy uzytkownik odpowie na pytanie przez klkniecie kafelka
+// Uruchamia sie kiedy uzytkownik odpowie na pytanie przez klikniecie kafelka
 function selectAnswer(answer) {
     // zapisanie wybranej odpowiedzi
     currentUserAnswer = answer;
-    // ukrycie odpowiedzi
-    document.getElementById('answers').style.display = 'none';
-
-    // musimy tez ukryc obecne zdjecie z pytaniem
-    document.getElementById('questionImage').style.display = 'none';
-
+    let result = document.getElementById('result');
+    // Wyswietlenie uzytkownikowi informacji o tym czy dobrze odpowiedzial
+    if (currentQuestionType == 0) {
+        if (answer == currentColor) {
+            result.src = `images/game/good.png`;
+        } else {
+            result.src = `images/game/bad.png`;
+        }
+    } else {
+        if (answer == currentText) {
+            result.src = `images/game/good.png`;
+        } else {
+            result.src = `images/game/bad.png`;
+        }
+    }
+    result.style.display = 'block';
     // Odpalenie kolejnego pytania
-    showNextQuestion();
+    setTimeout(() => {
+        showNextTask();
+    }, 1500);  
 }
 
 // Pokazuje alerty

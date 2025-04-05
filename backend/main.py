@@ -1,7 +1,6 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import pandas as pd
 import os
-import random
 import asyncio
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -9,7 +8,7 @@ from pydantic import BaseModel
 from mab import EpsilonGreedy
 
 # Inicjalizacja bandyty
-num_variants = 4
+num_variants = 9
 epsilon = 0.2
 bandit = EpsilonGreedy(num_variants, epsilon)
 

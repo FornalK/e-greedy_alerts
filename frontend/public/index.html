@@ -15,14 +15,24 @@
 
     <div id="container">
         <div id="questionContainer">
-            <img id="questionImage" style="display:none;" src="" alt="Pytanie">
+            <div id="task">
+                <h1 id="question">PYTANE</h1>
+                <h1 id="colorText">KOLOR</h1>
+            </div>
+            <div class="answers">
+                <img class="answer" onclick="selectAnswer('CZERWONY')">
+                <img class="answer" onclick="selectAnswer('ZIELONY')">
+                <img class="answer" onclick="selectAnswer('NIEBIESKI')">
+                <img class="answer" onclick="selectAnswer('FIOLETOWY')">
+            </div>
+            <div class="answers">
+                <img class="answer" onclick="selectAnswer('CYJAN')">
+                <img class="answer" onclick="selectAnswer('ŻÓŁTY')">
+                <img class="answer" onclick="selectAnswer('CZARNY')">
+                <img class="answer" onclick="selectAnswer('BIAŁY')">
+            </div>
         </div>
-        <div id="answers" style="display:none;">
-            <img id="answerA" src="" alt="Odpowiedź A" onclick="selectAnswer('A')">
-            <img id="answerB" src="" alt="Odpowiedź B" onclick="selectAnswer('B')">
-            <img id="answerC" src="" alt="Odpowiedź C" onclick="selectAnswer('C')">
-            <img id="answerD" src="" alt="Odpowiedź D" onclick="selectAnswer('D')">
-        </div>
+        <img id="result" style="display: none;">
     </div>
 
     <div id="alert" style="display:none;">
