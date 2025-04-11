@@ -24,7 +24,6 @@ wsNewAlertNumber.onmessage = (event) => {
 
 const colorsRGB = ["#ff0000", "#00ff00", "#0000ff", "#ff00ff", "#00ffff", "#ffff00", "#000000", "#ffffff"];
 const colorsInWords = ["CZERWONY", "ZIELONY", "NIEBIESKI", "FIOLETOWY", "CYJAN", "ŻÓŁTY", "CZARNY", "BIAŁY"];
-const questions = ["Jakiego koloru jest napis?", "Na jaki kolor wskazuje napis?"];
 let alertsDisplayedCounter = 0;
 let currentQuestionType;
 let currentText;
@@ -86,7 +85,19 @@ function showNextTask() {
     currentColorIndex = Math.floor(Math.random() * 8);
     currentColor = colorsInWords[currentColorIndex];
 
-    question.textContent = questions[currentQuestionType];
+    if (currentQuestionType) {
+        document.getElementById("question2").classList.remove("disactiveQuestion");
+        document.getElementById("question2").classList.add("activeQuestion");
+
+        document.getElementById("question1").classList.remove("activeQuestion");
+        document.getElementById("question1").classList.add("disactiveQuestion");
+    } else {
+        document.getElementById("question1").classList.remove("disactiveQuestion");
+        document.getElementById("question1").classList.add("activeQuestion");
+
+        document.getElementById("question2").classList.remove("activeQuestion");
+        document.getElementById("question2").classList.add("disactiveQuestion");
+    }
     colorText.textContent = currentText;
     colorText.style.color = colorsRGB[currentColorIndex];
     task.style.display = 'inline';

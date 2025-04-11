@@ -47,8 +47,24 @@ body {
     text-align: center;
 }
 
-#question {
+#question1, #question2  {
     font-size: 50px;
+    display: inline-block;
+    margin-right: 20px;
+    color: white;
+    -webkit-text-stroke: 1px black;
+}
+
+.activeQuestion {
+    text-shadow:
+    0 0 5px rgb(255, 255, 0),
+    0 0 10px rgb(255, 255, 0),
+    0 0 15px rgb(255, 255, 0);
+    opacity: 1;
+}
+
+.disactiveQuestion {
+    opacity: 0.25;
 }
 
 #colorText {
