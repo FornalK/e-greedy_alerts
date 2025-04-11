@@ -70,8 +70,11 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     await websocket.send_text("Connected to WebSocket")
     while True:
-        data = await websocket.receive_text()
-        await websocket.send_text(f"Server received: {data}")
+        try:
+            data = await websocket.receive_text()
+            await websocket.send_text(f"Server received: {data}")
+        except WebSocketDisconnect:
+            print("User has disconnected")
 
 @app.websocket("/ws/newAlertNumber")
 async def websocket_new_alert_number(websocket: WebSocket):
