@@ -9,6 +9,10 @@ const backendHttp = window.location.hostname === "localhost"
 let wsConnect = new WebSocket(`${backendHost}/ws/connect`);
 wsConnect.onmessage = event => document.getElementById("serverMessage").innerText = event.data;
 
+wsConnect.onclose = () => {
+    document.getElementById("serverMessage").innerText = "";
+};
+
 const wsNewAlertNumber = new WebSocket(`${backendHost}/ws/newAlertNumber`);
 wsNewAlertNumber.onmessage = (event) => {
     // Kiedy otrzymam informacje z ewaluacja od algorytmu, który teraz alery wyświetlić to trzeba to zaplanować
@@ -21,6 +25,7 @@ wsNewAlertNumber.onmessage = (event) => {
 const colorsRGB = ["#ff0000", "#00ff00", "#0000ff", "#ff00ff", "#00ffff", "#ffff00", "#000000", "#ffffff"];
 const colorsInWords = ["CZERWONY", "ZIELONY", "NIEBIESKI", "FIOLETOWY", "CYJAN", "ŻÓŁTY", "CZARNY", "BIAŁY"];
 const questions = ["Jakiego koloru jest napis?", "Na jaki kolor wskazuje napis?"];
+let alertsDisplayedCounter = 0;
 let currentQuestionType;
 let currentText;
 let currentColor;
@@ -48,7 +53,7 @@ document.getElementById('startBtn').addEventListener('click', function() {
 	
 	// Usuwamy przycisk oraz instrukcje startowa i pole tekstowe po kliknięciu
 	this.remove();
-	document.getElementById('instruction').remove();
+	document.getElementById('instruction').style.display = 'none';
     textField.remove();
 
     // Ustawiamy styl display na 'block', aby pokazać ukryty kontener
@@ -66,6 +71,7 @@ document.getElementById('startBtn').addEventListener('click', function() {
     
     // losujemy za ile ma pojawic sie pierwszy alert (domyślnie jest to alert losowy)
     let delay = Math.random() * 7000 + 8000; // wyswietlenie alertu z opoznieniem od 8 do 15 sekund
+    alertsDisplayedCounter++;
     setTimeout(() => showAlert(Math.floor(Math.random() * 9) + 1), delay);
 });
 
@@ -115,15 +121,29 @@ function selectAnswer(answer) {
 
 // Pokazuje alerty
 function showAlert(newAlertNumber) {
-    alertNumber = newAlertNumber;
-    document.getElementById('alertImage').src = `images/alerts/${String(alertNumber)}.png`;
+    // Warunek zakończenia
+    if (alertsDisplayedCounter > 54) {
+        document.getElementById('container').remove();
+        wsConnect.close();
+        wsNewAlertNumber.close();
+        let text = document.getElementById('instruction');
+        text.textContent = 'Dziękuję za udział i poświęcony czas! Możesz zamknąć stronę! Życzę Ci miłego dnia :)';
+        text.style.display = 'block';
+    } else {
+        alertNumber = newAlertNumber;
+        document.getElementById('alertImage').src = `images/alerts/${String(alertNumber)}.png`;
 
-    // Ustawiamy styl display na 'block', aby pokazać ukryty kontener
-    document.getElementById('alert').style.display = 'block';
+        // Ustawiamy styl display na 'block', aby pokazać ukryty kontener
+        document.getElementById('alert').style.display = 'block';
 
-    // Start pomiaru czasu od pojawienia sie alertu
-    alertStartTime = performance.now();
+        // Start pomiaru czasu od pojawienia sie alertu
+        alertStartTime = performance.now();
+
+        // Zwiększenie licznika z ilością już wyświetlonych alertów
+        alertsDisplayedCounter++;
+    }
 }
+
 
 // Podpięcie funkcji anonimowej, zamykajacej alert
 document.getElementById('exitAlertBtn').addEventListener('click', function() {

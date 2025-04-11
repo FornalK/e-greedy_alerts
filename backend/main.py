@@ -77,7 +77,7 @@ async def save_choice(data: AlertData):
 @app.websocket("/ws/connect")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    await websocket.send_text("Connected to WebSocket")
+    await websocket.send_text("Connected to MAB")
     while True:
         try:
             data = await websocket.receive_text()
