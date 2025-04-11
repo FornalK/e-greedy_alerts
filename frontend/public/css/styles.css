@@ -15,7 +15,7 @@ body {
 	padding: 10px 20px;
 	margin: 40px;
     text-align: center;
-    font-size: 24px;
+    font-size: 20px;
 }
 
 #startBtn {
@@ -94,27 +94,27 @@ body {
 
 #alert {
     position: fixed;
-    width: auto;
-    height: auto;
     bottom: 0;
     right: 0;
-	display: none;
-}
-
-#alertImage {
+    display: none;
+    padding: 0;
+  }
+  
+  #alertImage {
+    display: block;
     width: 100%;
     height: auto;
-    display: inline;
-}
-
-#exitAlertBtn {
-    position: fixed;
+  }
+  
+  #exitAlertBtn {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
     background-color: rgb(0, 255, 0);
     padding: 10px 20px;
     font-size: 16px;
     cursor: pointer;
-    width: 380px;
+    width: 360px;
     height: 46px;
-    bottom: 5px;
-    right: 10px;
-}
+  }
