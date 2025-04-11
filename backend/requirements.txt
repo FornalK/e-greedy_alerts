@@ -1,5 +1,5 @@
 fastapi~=0.115.11
-uvicorn
+uvicorn[standard]
 openpyxl
 pandas~=2.2.3
 pydantic~=2.10.6
