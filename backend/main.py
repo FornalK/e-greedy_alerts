@@ -41,6 +41,10 @@ if not os.path.exists(FILE_PATH):
     df = pd.DataFrame(columns=["User", "alertNumber", "alertTime"])
     df.to_excel(FILE_PATH, index=False)
 
+@app.get("/")
+def root():
+    return {"message": "Backend działa poprawnie 🚀"}
+
 # Funkcja, która otrzymuje i zapisuje dane z frontendu
 @app.post("/save/")
 async def save_choice(data: AlertData):
