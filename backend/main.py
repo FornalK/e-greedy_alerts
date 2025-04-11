@@ -1,4 +1,5 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi.responses import FileResponse
 import pandas as pd
 import os
 import asyncio
@@ -34,16 +35,24 @@ app.add_middleware(
 )
 
 # Nazwa pliku gdzie zapisywane sa dane
-FILE_PATH = "data.xlsx"
+FILE_PATH = os.path.abspath("data.xlsx")
 
 # Tworzenie pliku jeśli nie istnieje
 if not os.path.exists(FILE_PATH):
     df = pd.DataFrame(columns=["User", "alertNumber", "alertTime"])
     df.to_excel(FILE_PATH, index=False)
 
+# Funkcja, która wysyła wiadomość na stronę serwera
 @app.get("/")
 def root():
     return {"message": "Backend działa poprawnie 🚀"}
+
+# Endpoint do pobrania pliku
+@app.get("/download")
+async def download_file():
+    if not os.path.exists(FILE_PATH):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(FILE_PATH, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', filename="data.xlsx")
 
 # Funkcja, która otrzymuje i zapisuje dane z frontendu
 @app.post("/save/")
