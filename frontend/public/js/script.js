@@ -64,9 +64,9 @@ document.getElementById('startBtn').addEventListener('click', function() {
     // pokazujemy pierwsze zadanie
     showNextTask();
     
-    // losujemy za ile ma pojawic sie pierwszy alert (domyślnie jest to alert z numerem 1)
+    // losujemy za ile ma pojawic sie pierwszy alert (domyślnie jest to alert losowy)
     let delay = Math.random() * 7000 + 8000; // wyswietlenie alertu z opoznieniem od 8 do 15 sekund
-    setTimeout(() => showAlert(1), delay);
+    setTimeout(() => showAlert(Math.floor(Math.random() * 9) + 1), delay);
 });
 
 // Pokazuje zadanie

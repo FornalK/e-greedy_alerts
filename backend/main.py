@@ -66,7 +66,7 @@ async def save_choice(data: AlertData):
     # Po uzyskaniu nagrody (np. ujemnego czasu ekspozycji)
     reward = - float(data.alertTime)  # Im krótszy czas, tym wyższa nagroda
     selected_variant = int(data.alertNumber)
-    bandit.update(selected_variant, reward)
+    bandit.update(selected_variant - 1, reward)
 
     # Uruchomienie asynchronicznej funkcji do wysłania numeru dla nowego alertu przez WebSocket
     asyncio.create_task(send_new_alert_number())
