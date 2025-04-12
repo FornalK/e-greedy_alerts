@@ -129,12 +129,14 @@ async def websocket_endpoint(websocket: WebSocket):
     mab_id = bandit_ids[user]
     await websocket.send_text(f"Połączono z instancją: {mab_id}")
 
-    while True:
-        try:
+    try:
+        while True:
             data = await websocket.receive_text()
             await websocket.send_text(f"Serwer otrzymał: {data}")
-        except WebSocketDisconnect:
-            print(f"❌ Użytkownik {user} rozłączył się z /ws/connect")
+    except WebSocketDisconnect:
+        print(f"❌ Użytkownik {user} rozłączył się z /ws/connect")
+    except RuntimeError as e:
+        print(f"⚠️ RuntimeError przy websocket użytkownika {user}: {e}")
 
 @app.websocket("/ws/newAlertNumber")
 async def websocket_new_alert_number(websocket: WebSocket):
@@ -158,6 +160,8 @@ async def websocket_new_alert_number(websocket: WebSocket):
     except WebSocketDisconnect:
         print(f"❌ WebSocket rozłączony: {user}")
         del active_connections[user]
+    except RuntimeError as e:
+        print(f"⚠️ RuntimeError przy websocket użytkownika {user}: {e}")
 
 # Funkcja, która wysyła informacje o wybranych przez algorytm alertach
 async def send_new_alert_number(user: str):

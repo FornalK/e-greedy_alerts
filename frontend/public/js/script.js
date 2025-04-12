@@ -29,7 +29,8 @@ textField.addEventListener('input', () => {
 });
 
 // Podpięcie funkcji anonimowej, uruchamiajacej eksperyment i usuwajacej elemnty startowe
-button.addEventListener('click', function() {    
+button.addEventListener('click', function() {
+    
     // Pobranie wartości wpisanej przez użytkownika
     userName = textField.value;
 	
@@ -143,7 +144,7 @@ function selectAnswer(answer) {
 // Pokazuje alerty
 function showAlert(newAlertNumber) {
     // Warunek zakończenia
-    if (alertsDisplayedCounter > 8) {
+    if (alertsDisplayedCounter > 45) {
         document.getElementById('container').remove();
         wsConnect.close();
         wsNewAlertNumber.close();
