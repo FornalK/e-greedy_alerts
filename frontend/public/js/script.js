@@ -134,7 +134,7 @@ function selectAnswer(answer) {
 // Pokazuje alerty
 function showAlert(newAlertNumber) {
     // Warunek zakończenia
-    if (alertsDisplayedCounter > 54) {
+    if (alertsDisplayedCounter > 10) {
         document.getElementById('container').remove();
         wsConnect.close();
         wsNewAlertNumber.close();

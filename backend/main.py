@@ -1,5 +1,5 @@
-from idlelib.query import Query
-
+import time
+from collections import defaultdict
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.responses import FileResponse
 import pandas as pd
@@ -31,6 +31,8 @@ active_connections = {} # user -> websocket
 bandits = {}              # user -> instancja EpsilonGreedy
 bandit_ids = {}      # user -> instance number
 bandit_counter = 0        # aby zapisywać unikalne id bandytów
+last_active = defaultdict(lambda: time.time()) # czasy ostatniej aktywności
+MAB_TIMEOUT_SECONDS = 30 * 60  # 30 minut
 
 # Konfiguracja aplikacji FastAPI
 app.add_middleware(
@@ -48,6 +50,19 @@ FILE_PATH = os.path.abspath("data.xlsx")
 if not os.path.exists(FILE_PATH):
     df = pd.DataFrame(columns=["User", "alertNumber", "alertTime"])
     df.to_excel(FILE_PATH, index=False)
+
+# Zadanie okresowe do usuwania nieaktywnych użytkowników
+async def cleanup_inactive_bandits():
+    while True:
+        now = time.time()
+        to_delete = [user for user, last in last_active.items() if now - last > MAB_TIMEOUT_SECONDS]
+        for user in to_delete:
+            print(f"🧹 Usuwam nieaktywnego użytkownika: {user}")
+            bandits.pop(user, None)
+            bandit_ids.pop(user, None)
+            last_active.pop(user, None)
+        await asyncio.sleep(MAB_TIMEOUT_SECONDS) # Czekaj 30 minut
+
 
 # Funkcja, która wysyła wiadomość na stronę serwera
 @app.get("/")
@@ -68,6 +83,9 @@ async def save_data(data: AlertData):
     df = pd.read_excel(FILE_PATH)
     df.loc[len(df)] = [data.user, data.alertNumber, data.alertTime]
     df.to_excel(FILE_PATH, index=False)
+
+    # aktualizacja aktywności użytkownika
+    last_active[data.user] = time.time()
 
     # Aktualizacja modelu bandyty konkretnego użytkownika
     # Po uzyskaniu nagrody (np. ujemnego czasu ekspozycji)
@@ -168,3 +186,7 @@ def findNewAlertNumber(user: str):
     else:
         print(f"⚠️ Brak bandyty dla użytkownika {user}")
         return -1  # domyślnie
+
+@app.on_event("startup")
+async def on_startup():
+    asyncio.create_task(cleanup_inactive_bandits())
