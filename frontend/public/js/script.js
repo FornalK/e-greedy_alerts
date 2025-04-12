@@ -6,22 +6,6 @@ const backendHttp = window.location.hostname === "localhost"
     ? "http://127.0.0.1:8000"
     : "https://egreedy-backend.onrender.com";
 
-let wsConnect = new WebSocket(`${backendHost}/ws/connect`);
-wsConnect.onmessage = event => document.getElementById("serverMessage").innerText = event.data;
-
-wsConnect.onclose = () => {
-    document.getElementById("serverMessage").innerText = "";
-};
-
-const wsNewAlertNumber = new WebSocket(`${backendHost}/ws/newAlertNumber`);
-wsNewAlertNumber.onmessage = (event) => {
-    // Kiedy otrzymam informacje z ewaluacja od algorytmu, który teraz alery wyświetlić to trzeba to zaplanować
-    console.log("Numer alert do wyświetlenia:", event.data);
-    // Losujemy za ile ma sie pojawić następny alert
-    let delay = Math.random() * 7000 + 8000; // wyswietlenie kolejnego alertu miedzy 8 a 15 sekund
-    setTimeout(() => showAlert(parseInt(event.data)), delay);
-};
-
 const colorsRGB = ["#ff0000", "#00ff00", "#0000ff", "#ff00ff", "#00ffff", "#ffff00", "#000000", "#ffffff"];
 const colorsInWords = ["CZERWONY", "ZIELONY", "NIEBIESKI", "FIOLETOWY", "CYJAN", "ŻÓŁTY", "CZARNY", "BIAŁY"];
 let alertsDisplayedCounter = 0;
@@ -64,6 +48,23 @@ document.getElementById('startBtn').addEventListener('click', function() {
         elements[i].style.backgroundColor = colorsRGB[i];
 
     document.getElementById('container').style.display = 'block';
+
+    // Połączenie z serwerem dopiero po wystartowaniu przyciskiem
+    let wsConnect = new WebSocket(`${backendHost}/ws/connect?user=${userName}`);
+    wsConnect.onmessage = event => document.getElementById("serverMessage").innerText = event.data;
+
+    wsConnect.onclose = () => {
+        document.getElementById("serverMessage").innerText = "";
+    };
+
+    const wsNewAlertNumber = new WebSocket(`${backendHost}/ws/newAlertNumber?user=${userName}`);
+    wsNewAlertNumber.onmessage = (event) => {
+        // Kiedy otrzymam informacje z ewaluacja od algorytmu, który teraz alery wyświetlić to trzeba to zaplanować
+        console.log("Numer alert do wyświetlenia:", event.data);
+        // Losujemy za ile ma sie pojawić następny alert
+        let delay = Math.random() * 7000 + 8000; // wyswietlenie kolejnego alertu miedzy 8 a 15 sekund
+        setTimeout(() => showAlert(parseInt(event.data)), delay);
+    };
 
     // pokazujemy pierwsze zadanie
     showNextTask();

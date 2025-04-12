@@ -1,3 +1,5 @@
+from idlelib.query import Query
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.responses import FileResponse
 import pandas as pd
@@ -5,6 +7,7 @@ import os
 import asyncio
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from urllib.parse import parse_qs
 
 from mab import EpsilonGreedy
 
@@ -22,10 +25,12 @@ class AlertData(BaseModel):
 app = FastAPI()
 
 # Lista aktywnych połączeń WebSocket
-active_connections = set()
+active_connections = {} # user -> websocket
 
-# Słownik: user -> instancja EpsilonGreedy
-bandits = {}
+
+bandits = {}              # user -> instancja EpsilonGreedy
+bandit_ids = {}      # user -> instance number
+bandit_counter = 0        # aby zapisywać unikalne id bandytów
 
 # Konfiguracja aplikacji FastAPI
 app.add_middleware(
@@ -58,54 +63,88 @@ async def download_file():
 
 # Funkcja, która otrzymuje i zapisuje dane z frontendu
 @app.post("/save/")
-async def save_choice(data: AlertData):
+async def save_data(data: AlertData):
     print(f"🔍 Otrzymane dane: {data}")
     df = pd.read_excel(FILE_PATH)
     df.loc[len(df)] = [data.user, data.alertNumber, data.alertTime]
     df.to_excel(FILE_PATH, index=False)
 
-    # Tworzenie osobnej instancji bandyty dla danego użytkownika (jeśli nie istnieje)
-    if data.user not in bandits:
-        bandits[data.user] = EpsilonGreedy(num_variants, epsilon)
-
     # Aktualizacja modelu bandyty konkretnego użytkownika
     # Po uzyskaniu nagrody (np. ujemnego czasu ekspozycji)
-    reward = - float(data.alertTime)  # Im krótszy czas, tym wyższa nagroda
+    user = data.user
+    reward = -float(data.alertTime) # Im krótszy czas, tym wyższa nagroda
     selected_variant = int(data.alertNumber)
-    bandits[data.user].update(selected_variant - 1, reward)
+
+    bandit = bandits.get(user)
+    if bandit:
+        bandit.update(selected_variant - 1, reward)
+    else:
+        print(f"⚠️ Brak instancji MAB dla użytkownika: {user}")
 
     # Uruchomienie asynchronicznej funkcji do wysłania numeru dla nowego alertu przez WebSocket
     asyncio.create_task(send_new_alert_number(data.user))
 
-    return {"message": "Saved"}
+    return {"message": "Zapisano"}
 
 # Endpointy do łączenia się z frontendem
 @app.websocket("/ws/connect")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    await websocket.send_text("Connected to MAB")
+    global bandit_counter
+
+    # Parsowanie query string
+    query_params = parse_qs(websocket.url.query)
+    user = query_params.get("user", [None])[0]
+
+    if not user:
+        await websocket.send_text("❌ Nie podano użytkownika w URL")
+        await websocket.close()
+        return
+
+    # Tworzenie osobnej instancji bandyty dla danego użytkownika (jeśli nie istnieje)
+    if user not in bandits:
+        bandits[user] = EpsilonGreedy(num_variants, epsilon)
+        bandit_counter += 1
+        bandit_ids[user] = f"MAB{bandit_counter}"
+
+    # Informacja o przypisanym MAB
+    mab_id = bandit_ids[user]
+    await websocket.send_text(f"Połączono z instancją: {mab_id}")
+
     while True:
         try:
             data = await websocket.receive_text()
-            await websocket.send_text(f"Server received: {data}")
+            await websocket.send_text(f"Serwer otrzymał: {data}")
         except WebSocketDisconnect:
-            print("User has disconnected")
+            print(f"❌ Użytkownik {user} rozłączył się z /ws/connect")
 
 @app.websocket("/ws/newAlertNumber")
 async def websocket_new_alert_number(websocket: WebSocket):
     await websocket.accept()
-    active_connections.add(websocket)
-    print("🔌 Nowe połączenie WebSocket")
+
+    # Parsowanie query string
+    query_params = parse_qs(websocket.url.query)
+    user = query_params.get("user", [None])[0]
+
+    if not user:
+        await websocket.send_text("❌ Nie podano użytkownika w URL")
+        await websocket.close()
+        return
+
+    active_connections[user] = websocket
+    print(f"🔌 Nowe połączenie WebSocket od użytkownika: {user}")
 
     try:
         while True:
             await websocket.receive_text()  # Czeka na dane
     except WebSocketDisconnect:
-        print("❌ WebSocket rozłączony")
-        active_connections.remove(websocket)
+        print(f"❌ WebSocket rozłączony: {user}")
+        del active_connections[user]
 
 # Funkcja, która wysyła informacje o wybranych przez algorytm alertach
 async def send_new_alert_number(user: str):
+    websocket = active_connections.get(user)
+
     if not active_connections:
         print("⚠️ Brak aktywnych połączeń WebSocket")
         return
@@ -113,15 +152,19 @@ async def send_new_alert_number(user: str):
     newAlertNumber = findNewAlertNumber(user)
     print(f"📤 Wysyłanie liczby {newAlertNumber} dla użytkownika {user}")
 
-    # Wysyłamy do wszystkich klientów
-    for connection in active_connections:
-        try:
-            await connection.send_text(str(newAlertNumber))
-        except Exception as e:
-            print(f"⚠️ Błąd podczas wysyłania: {e}")
+    # Wysyłamy do konkretnego użytkownika
+    try:
+        await websocket.send_text(str(newAlertNumber))
+    except Exception as e:
+        print(f"⚠️ Błąd podczas wysyłania do {user}: {e}")
 
 # Funkcja, która wybiera wariant alertu przez wielorękiego bandyte
 def findNewAlertNumber(user: str):
-    # Wybór wariantu alertu dla konkretnego użytkownika
-    variant = bandits[user].select_variant()
-    return variant + 1 # + 1 bo indeksujemy od 0
+    bandit = bandits.get(user)
+    if bandit:
+        # Wybór wariantu alertu dla konkretnego użytkownika
+        variant = bandit.select_variant()
+        return variant + 1 # + 1 bo indeksujemy od 0
+    else:
+        print(f"⚠️ Brak bandyty dla użytkownika {user}")
+        return -1  # domyślnie
