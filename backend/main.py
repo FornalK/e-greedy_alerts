@@ -11,7 +11,6 @@ from mab import EpsilonGreedy
 # Inicjalizacja bandyty
 num_variants = 9
 epsilon = 0.2
-bandit = EpsilonGreedy(num_variants, epsilon)
 
 # Model danych odbieranych z frontendu
 class AlertData(BaseModel):
@@ -24,6 +23,9 @@ app = FastAPI()
 
 # Lista aktywnych połączeń WebSocket
 active_connections = set()
+
+# Słownik: user -> instancja EpsilonGreedy
+bandits = {}
 
 # Konfiguracja aplikacji FastAPI
 app.add_middleware(
@@ -62,14 +64,18 @@ async def save_choice(data: AlertData):
     df.loc[len(df)] = [data.user, data.alertNumber, data.alertTime]
     df.to_excel(FILE_PATH, index=False)
 
-    # Aktualizacja modelu bandyty
+    # Tworzenie osobnej instancji bandyty dla danego użytkownika (jeśli nie istnieje)
+    if data.user not in bandits:
+        bandits[data.user] = EpsilonGreedy(num_variants, epsilon)
+
+    # Aktualizacja modelu bandyty konkretnego użytkownika
     # Po uzyskaniu nagrody (np. ujemnego czasu ekspozycji)
     reward = - float(data.alertTime)  # Im krótszy czas, tym wyższa nagroda
     selected_variant = int(data.alertNumber)
-    bandit.update(selected_variant - 1, reward)
+    bandits[data.user].update(selected_variant - 1, reward)
 
     # Uruchomienie asynchronicznej funkcji do wysłania numeru dla nowego alertu przez WebSocket
-    asyncio.create_task(send_new_alert_number())
+    asyncio.create_task(send_new_alert_number(data.user))
 
     return {"message": "Saved"}
 
@@ -99,13 +105,13 @@ async def websocket_new_alert_number(websocket: WebSocket):
         active_connections.remove(websocket)
 
 # Funkcja, która wysyła informacje o wybranych przez algorytm alertach
-async def send_new_alert_number():
+async def send_new_alert_number(user: str):
     if not active_connections:
         print("⚠️ Brak aktywnych połączeń WebSocket")
         return
 
-    newAlertNumber = findNewAlertNumber()
-    print(f"📤 Wysyłanie liczby: {newAlertNumber}")
+    newAlertNumber = findNewAlertNumber(user)
+    print(f"📤 Wysyłanie liczby {newAlertNumber} dla użytkownika {user}")
 
     # Wysyłamy do wszystkich klientów
     for connection in active_connections:
@@ -115,7 +121,7 @@ async def send_new_alert_number():
             print(f"⚠️ Błąd podczas wysyłania: {e}")
 
 # Funkcja, która wybiera wariant alertu przez wielorękiego bandyte
-def findNewAlertNumber():
-    # Wybór wariantu alertu
-    variant = bandit.select_variant()
+def findNewAlertNumber(user: str):
+    # Wybór wariantu alertu dla konkretnego użytkownika
+    variant = bandits[user].select_variant()
     return variant + 1 # + 1 bo indeksujemy od 0
