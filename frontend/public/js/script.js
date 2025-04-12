@@ -16,21 +16,20 @@ let userName;
 let currentUserAnswer;
 let alertStartTime;
 let alertNumber;
+let wsConnect;
+let wsNewAlertNumber;
 
-function sendAlertData(alertNumber, alertTime) {
-    fetch(`${backendHttp}/save/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user: userName, alertNumber: alertNumber, alertTime: alertTime })
-    }).then(response => response.json())
-      .then(data => console.log(data));
-}
+// Przyciski i pole 
+const textField = document.getElementById('user');
+const button = document.getElementById('startBtn');
+
+// podpięcie funkcjonalności, że dopóki użytkownik nie wpisze nicku, to przycisk przejścia dalej jest nieaktywny
+textField.addEventListener('input', () => {
+  button.disabled = textField.value.trim() === '';
+});
 
 // Podpięcie funkcji anonimowej, uruchamiajacej eksperyment i usuwajacej elemnty startowe
-document.getElementById('startBtn').addEventListener('click', function() {
-    // Dobranie sie do pola tekstowego z ekranu startowego
-    let textField = document.getElementById("user");
-    
+button.addEventListener('click', function() {    
     // Pobranie wartości wpisanej przez użytkownika
     userName = textField.value;
 	
@@ -50,14 +49,14 @@ document.getElementById('startBtn').addEventListener('click', function() {
     document.getElementById('container').style.display = 'block';
 
     // Połączenie z serwerem dopiero po wystartowaniu przyciskiem
-    let wsConnect = new WebSocket(`${backendHost}/ws/connect?user=${userName}`);
+    wsConnect = new WebSocket(`${backendHost}/ws/connect?user=${userName}`);
     wsConnect.onmessage = event => document.getElementById("serverMessage").innerText = event.data;
 
     wsConnect.onclose = () => {
         document.getElementById("serverMessage").innerText = "";
     };
 
-    const wsNewAlertNumber = new WebSocket(`${backendHost}/ws/newAlertNumber?user=${userName}`);
+    wsNewAlertNumber = new WebSocket(`${backendHost}/ws/newAlertNumber?user=${userName}`);
     wsNewAlertNumber.onmessage = (event) => {
         // Kiedy otrzymam informacje z ewaluacja od algorytmu, który teraz alery wyświetlić to trzeba to zaplanować
         console.log("Numer alert do wyświetlenia:", event.data);
@@ -74,6 +73,16 @@ document.getElementById('startBtn').addEventListener('click', function() {
     alertsDisplayedCounter++;
     setTimeout(() => showAlert(Math.floor(Math.random() * 9) + 1), delay);
 });
+
+// Funkcja do wysyłania danych do serwera
+function sendAlertData(alertNumber, alertTime) {
+    fetch(`${backendHttp}/save/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user: userName, alertNumber: alertNumber, alertTime: alertTime })
+    }).then(response => response.json())
+      .then(data => console.log(data));
+}
 
 // Pokazuje zadanie
 function showNextTask() {
@@ -134,7 +143,7 @@ function selectAnswer(answer) {
 // Pokazuje alerty
 function showAlert(newAlertNumber) {
     // Warunek zakończenia
-    if (alertsDisplayedCounter > 10) {
+    if (alertsDisplayedCounter > 8) {
         document.getElementById('container').remove();
         wsConnect.close();
         wsNewAlertNumber.close();

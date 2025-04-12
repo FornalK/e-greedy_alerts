@@ -18,6 +18,16 @@ body {
     font-size: 20px;
 }
 
+@media (max-width: 1600px) {
+    #instruction {
+        background-color: rgb(228, 229, 230);
+        padding: 10px 20px;
+        margin: 30px;
+        text-align: center;
+        font-size: 14px;
+    }
+  }
+
 #startBtn {
     padding: 10px 20px;
     font-size: 16px;
