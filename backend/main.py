@@ -43,8 +43,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Nazwa pliku gdzie zapisywane sa dane
-FILE_PATH = os.path.abspath("data.xlsx")
+# Ścieżka do pliku na Persistent Disk Rendera
+DATA_DIR = "/var/data"
+FILE_PATH = os.path.join(DATA_DIR, "data.xlsx")
+
+# Tworzenie katalogu, jeśli nie istnieje (dla lokalnego testowania)
+os.makedirs(DATA_DIR, exist_ok=True)
 
 # Tworzenie pliku jeśli nie istnieje
 if not os.path.exists(FILE_PATH):
