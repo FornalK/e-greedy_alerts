@@ -80,6 +80,21 @@ async def download_file():
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(FILE_PATH, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', filename="data.xlsx")
 
+# Endpoint do manualnego resetu mabów
+@app.get("/reset")
+async def reset_mab():
+    print(f"🧹 Liczba bandytów: {bandit_counter}")
+    print(f"🧹 Bandyci: {bandit_ids}")
+    now = time.time()
+    to_delete = [user for user, last in last_active.items() if now - last > MAB_TIMEOUT_SECONDS]
+    for user in to_delete:
+        print(f"🧹 Usuwam nieaktywnego użytkownika: {user}")
+        bandits.pop(user, None)
+        bandit_ids.pop(user, None)
+        last_active.pop(user, None)
+    print(f"🧹 Liczba bandytów po resecie: {bandit_counter}")
+    print(f"🧹 Bandyci po resecie: {bandit_ids}")
+
 # Funkcja, która otrzymuje i zapisuje dane z frontendu
 @app.post("/save/")
 async def save_data(data: AlertData):
